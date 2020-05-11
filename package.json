@@ -1,5 +1,5 @@
 {
-  "name": "typeorm",
+  "name": "@synconset/typeorm",
   "private": true,
   "version": "0.2.24",
   "description": "Data-Mapper ORM for TypeScript, ES7, ES6, ES5. Supports MySQL, PostgreSQL, MariaDB, SQLite, MS SQL Server, Oracle, MongoDB databases.",
@@ -24,10 +24,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/typeorm/typeorm.git"
+    "url": "https://github.com/wymsee/typeorm.git"
   },
   "bugs": {
-    "url": "https://github.com/typeorm/typeorm/issues"
+    "url": "https://github.com/wymsee/typeorm/issues"
   },
   "tags": [
     "orm",

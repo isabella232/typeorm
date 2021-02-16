@@ -22,7 +22,7 @@ export class DateUtils {
     /**
      * Converts given value into date string in a "YYYY-MM-DD" format.
      */
-    static mixedDateToDateString(value: Date|any): string|any {
+    static mixedDateToDateString(value: string|Date): string {
         if (value instanceof Date)
             return this.formatZerolessValue(value.getFullYear()) + "-" + this.formatZerolessValue(value.getMonth() + 1) + "-" + this.formatZerolessValue(value.getDate());
 
@@ -146,7 +146,7 @@ export class DateUtils {
      * Converts each item in the given array to string joined by "," separator.
      */
     static simpleArrayToString(value: any[]|any): string[]|any {
-        if (value instanceof Array) {
+        if (Array.isArray(value)) {
             return (value as any[])
                 .map(i => String(i))
                 .join(",");
@@ -175,12 +175,7 @@ export class DateUtils {
     }
 
     static stringToSimpleJson(value: any) {
-        try {
-            const simpleJSON = JSON.parse(value);
-            return (typeof simpleJSON === "object") ? simpleJSON : {};
-       } catch (err) {
-            return {};
-       }
+        return typeof value === "string" ? JSON.parse(value) : value;
     }
 
     static simpleEnumToString(value: any) {

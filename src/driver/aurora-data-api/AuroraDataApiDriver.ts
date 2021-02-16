@@ -16,6 +16,7 @@ import {AuroraDataApiConnectionCredentialsOptions} from "./AuroraDataApiConnecti
 import {EntityMetadata} from "../../metadata/EntityMetadata";
 import {OrmUtils} from "../../util/OrmUtils";
 import {ApplyValueTransformers} from "../../util/ApplyValueTransformers";
+import {ReplicationMode} from "../types/ReplicationMode";
 
 /**
  * Organizes communication with MySQL DBMS.
@@ -31,8 +32,6 @@ export class AuroraDataApiDriver implements Driver {
      * Aurora Data API underlying library.
      */
     DataApiDriver: any;
-
-    client: any;
 
     /**
      * Connection pool.
@@ -300,14 +299,6 @@ export class AuroraDataApiDriver implements Driver {
         // load mysql package
         this.loadDependencies();
 
-        this.client = new this.DataApiDriver(
-            this.options.region,
-            this.options.secretArn,
-            this.options.resourceArn,
-            this.options.database,
-            (query: string, parameters?: any[]) => this.connection.logger.logQuery(query, parameters),
-        );
-
         // validate options to make sure everything is set
         // todo: revisit validation with replication in mind
         // if (!(this.options.host || (this.options.extra && this.options.extra.socketPath)) && !this.options.socketPath)
@@ -353,8 +344,16 @@ export class AuroraDataApiDriver implements Driver {
     /**
      * Creates a query runner used to execute database queries.
      */
-    createQueryRunner(mode: "master"|"slave" = "master") {
-        return new AuroraDataApiQueryRunner(this);
+    createQueryRunner(mode: ReplicationMode) {
+        return new AuroraDataApiQueryRunner(this, new this.DataApiDriver(
+            this.options.region,
+            this.options.secretArn,
+            this.options.resourceArn,
+            this.options.database,
+            (query: string, parameters?: any[]) => this.connection.logger.logQuery(query, parameters),
+            this.options.serviceConfigOptions,
+            this.options.formatOptions,
+        ));
     }
 
     /**
@@ -532,7 +531,7 @@ export class AuroraDataApiDriver implements Driver {
     /**
      * Normalizes "default" value of the column.
      */
-    normalizeDefault(columnMetadata: ColumnMetadata): string {
+    normalizeDefault(columnMetadata: ColumnMetadata): string | undefined {
         const defaultValue = columnMetadata.default;
 
         if ((columnMetadata.type === "enum" || columnMetadata.type === "simple-enum") && defaultValue !== undefined) {
@@ -550,9 +549,6 @@ export class AuroraDataApiDriver implements Driver {
 
         } else if (typeof defaultValue === "string") {
             return `'${defaultValue}'`;
-
-        } else if (defaultValue === null) {
-            return `null`;
 
         } else {
             return defaultValue;
@@ -749,6 +745,13 @@ export class AuroraDataApiDriver implements Driver {
     }
 
     /**
+     * Returns true if driver supports fulltext indices.
+     */
+    isFullTextColumnTypeSupported(): boolean {
+        return true;
+    }
+
+    /**
      * Creates an escaped parameter.
      */
     createParameter(parameterName: string, index: number): string {
@@ -821,7 +824,7 @@ export class AuroraDataApiDriver implements Driver {
     /**
      * Checks if "DEFAULT" values in the column metadata and in the database are equal.
      */
-    protected compareDefaultValues(columnMetadataValue: string, databaseValue: string): boolean {
+    protected compareDefaultValues(columnMetadataValue: string | undefined, databaseValue: string | undefined): boolean {
         if (typeof columnMetadataValue === "string" && typeof databaseValue === "string") {
             // we need to cut out "'" because in mysql we can understand returned value is a string or a function
             // as result compare cannot understand if default is really changed or not

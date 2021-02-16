@@ -19,6 +19,7 @@ import {SqlServerConnectionCredentialsOptions} from "./SqlServerConnectionCreden
 import {EntityMetadata} from "../../metadata/EntityMetadata";
 import {OrmUtils} from "../../util/OrmUtils";
 import {ApplyValueTransformers} from "../../util/ApplyValueTransformers";
+import {ReplicationMode} from "../types/ReplicationMode";
 
 /**
  * Organizes communication with SQL Server DBMS.
@@ -296,7 +297,7 @@ export class SqlServerDriver implements Driver {
     /**
      * Creates a query runner used to execute database queries.
      */
-    createQueryRunner(mode: "master"|"slave" = "master") {
+    createQueryRunner(mode: ReplicationMode) {
         return new SqlServerQueryRunner(this, mode);
     }
 
@@ -490,7 +491,7 @@ export class SqlServerDriver implements Driver {
     /**
      * Normalizes "default" value of the column.
      */
-    normalizeDefault(columnMetadata: ColumnMetadata): string {
+    normalizeDefault(columnMetadata: ColumnMetadata): string | undefined {
         const defaultValue = columnMetadata.default;
 
         if (typeof defaultValue === "number") {
@@ -638,6 +639,13 @@ export class SqlServerDriver implements Driver {
      */
     isUUIDGenerationSupported(): boolean {
         return true;
+    }
+
+    /**
+     * Returns true if driver supports fulltext indices.
+     */
+    isFullTextColumnTypeSupported(): boolean {
+        return false;
     }
 
     /**
